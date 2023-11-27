@@ -1,0 +1,12 @@
+[package]
+name = "lsdata"
+version = "0.1.0"
+edition = "2021"
+description = "LSD (Less Syntax Data) configuration/data transfer format."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/kirillsemyonkin/lsd"
+
+[dependencies]
+utf8-chars = "3.0.1"
+indexmap = "2.0.2"
+implicit-clone = "0.4.8"
