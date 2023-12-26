@@ -68,7 +68,7 @@ configurations.all {
 
 ## Usage
 
-Once you got LSD into your Rust project, `import` it in your code:
+Once you got LSD into your Java project, `import` it in your code:
 
 ```java
 import kirillsemyonkin.lsdata.LSD; // Just LSD class itself
@@ -93,8 +93,6 @@ var langName = lsd
     )
     .orElseThrow(CouldNotFindLanguageNameException::new);
 ```
-
-Check out [documentation](https://docs.rs/lsdata/) to see more of the API.
 
 ## Planned
 
