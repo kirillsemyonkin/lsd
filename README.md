@@ -57,19 +57,19 @@ Value is a simple piece of data. It has no inner LSDs. Numbers are not distingui
 You may optionally wrap a value in quotes (single `'...'` or double `"..."`), which enables you to
 use string formatting using escape sequences (starting with a backslash `\`):
 
-Escape sequence | Result
--|-
-`\"`, `\'`, `\\`   | character, as-is (`\x22`, `\x27`, `\x5C`)
-`\0`               | null (`\x00`)
-`\a`, `\A`         | alert / bell (`\x07`)
-`\b`, `\B`         | backspace (`\x08`)
-`\t`, `\T`         | (horizontal) tab (`\x09`)
-`\n`, `\N`         | newline / line feed (`\x0A`)
-`\v`, `\V`         | vertical tab (`\x0B`)
-`\f`, `\F`         | form feed (`\x0C`)
-`\r`, `\R`         | carriage return (`\x0D`)
-`\x##`, `\X##`     | any utf-8 character (with sequences support!), `#` is a hex digit
-`\u####`, `\U####` | any utf-16 character (with surrogate pair support!), `#` is a hex digit
+| Escape sequence    | Result                                                                    |
+|--------------------|---------------------------------------------------------------------------|
+| `\"`, `\'`, `\\`   | character, as-is (`\x22`, `\x27`, `\x5C`)                                 |
+| `\0`               | null (`\x00`)                                                             |
+| `\a`, `\A`         | alert / bell (`\x07`)                                                     |
+| `\b`, `\B`         | backspace (`\x08`)                                                        |
+| `\t`, `\T`         | (horizontal) tab (`\x09`)                                                 |
+| `\n`, `\N`         | newline / line feed (`\x0A`)                                              |
+| `\v`, `\V`         | vertical tab (`\x0B`)                                                     |
+| `\f`, `\F`         | form feed (`\x0C`)                                                        |
+| `\r`, `\R`         | carriage return (`\x0D`)                                                  |
+| `\x##`, `\X##`     | any utf-8 character (with sequences support!), `#` is a hex digit         |
+| `\u####`, `\U####` | any utf-16 character (with surrogate pair support!), `#` is a hex digit   |
 
 Values end on a newline. Strings that follow values (and vice-versa) get concatenated with the
 whitespace between them. Values appear as always trimmed (stripped of whitespace on both sides),
@@ -116,7 +116,7 @@ Level (map, dictionaries) is an ordered set of key-LSD pairs, where key is a uni
 The syntax for levels uses curly braces `{...}`, and inside contains keys/paths followed by some
 whitespace, LSDs, and then newlines. An LSD file is immediately put into a level, if it is not
 a list (`[...]`) and not a level (`{...}`), and thus, empty file is considered an empty level.
-Levels with matching paths are merged. Levels may be ommited altogether and replaced by a dot `.` in
+Levels with matching paths are merged. Levels may be omitted altogether and replaced by a dot `.` in
 a key/path (level itself does not have to exist beforehand).
 
 ```lsd
@@ -146,11 +146,11 @@ LevelInner ::= (KeyPath NWS LevelLSD NWS)*
 
 KeyPath ::= KeyPart ('.' KeyPart)*
 KeyPart ::= (KeyWord | String)+
-KeyWord ::= (WordChar - '{' - '}' - '[' - ']' - '.')+
+KeyWord ::= (ValueWordChar - '{' - '}' - '[' - ']' - '.')+
 
 LevelLSD ::= LevelValue | List | Level
 LevelValue ::= LevelValuePart (IWS LevelValuePart)*
-LevelValueWordChar ::= WordChar - '}'
+LevelValueWordChar ::= ValueWordChar - '}'
 LevelValueWord ::= LevelValueWordChar+
 LevelValuePart ::= LevelValueWord | String
 ```

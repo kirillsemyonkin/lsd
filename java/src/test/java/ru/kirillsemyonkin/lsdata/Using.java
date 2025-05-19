@@ -1,4 +1,4 @@
-package kirillsemyonkin.lsdata;
+package ru.kirillsemyonkin.lsdata;
 
 import java.io.ByteArrayInputStream;
 

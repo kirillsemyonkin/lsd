@@ -1,12 +1,13 @@
 plugins {
-    `java-library`
+    id("java-library")
+    id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
-}
+description = "LSD (Less Syntax Data) configuration/data transfer format"
+group = "ru.kirillsemyonkin"
+version = "0.1.0"
+
+java.toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 
 repositories {
     mavenCentral()
@@ -17,11 +18,44 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+centralPortal {
+    pom {
+        url = "https://github.com/kirillsemyonkin/lsd"
+        licenses {
+            license {
+                name = "MIT"
+                url = "https://opensource.org/licenses/MIT"
+            }
+            license {
+                name = "Apache 2.0"
+                url = "https://opensource.org/licenses/Apache-2.0"
+            }
+        }
+        developers {
+            developer {
+                name = "Kirill Semyonkin"
+                email = "burnytc@gmail.com"
+            }
+        }
+        scm {
+            connection = "scm:git:git://github.com/kirillsemyonkin/lsd.git"
+            developerConnection = "scm:git:ssh://git@github.com:kirillsemyonkin/lsd.git"
+            url = "https://github.com/kirillsemyonkin/lsd/tree/master"
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+}
+
 tasks.compileJava {
-    options.compilerArgs.addAll(listOf(
-        "-Xlint:all",
-        "-Xlint:-serial",
-    ))
+    options.compilerArgs.addAll(
+        listOf(
+            "-Xlint:all",
+            "-Xlint:-serial",
+        )
+    )
 }
 
 tasks.test {
