@@ -69,26 +69,24 @@ fn basic() {
         lsd,
         LSD::Level(Level::from([
             (
-                format!("a"),
-                LSD::Value(format!("10"))
+                "a".to_string(),
+                LSD::Value("10".to_string())
             ),
             (
-                format!("b"),
-                LSD::Value(format!("20"))
+                "b".to_string(),
+                LSD::Value("20".to_string())
             ),
             (
-                format!("c"),
-                LSD::Value(format!(
-                    "a  test string\nand spaces  b"
-                ))
+                "c".to_string(),
+                LSD::Value("a  test string\nand spaces  b".to_string())
             ),
             (
-                format!("d"),
-                LSD::Value(format!(r#"also"string"#))
+                "d".to_string(),
+                LSD::Value(r#"also"string"#.to_string())
             ),
             (
-                format!("glued key"),
-                LSD::Value(format!("test"))
+                "glued key".to_string(),
+                LSD::Value("test".to_string())
             ),
         ]))
     );
@@ -114,33 +112,33 @@ fn nested_level() {
         lsd,
         LSD::Level(Level::from([
             (
-                format!("a"),
+                "a".to_string(),
                 LSD::Level(Level::from([(
-                    format!("a"),
-                    LSD::Value(format!("10")),
+                    "a".to_string(),
+                    LSD::Value("10".to_string()),
                 )]))
             ),
             (
-                format!("b"),
+                "b".to_string(),
                 LSD::Level(Level::default())
             ),
             (
-                format!("c"),
+                "c".to_string(),
                 LSD::Level(Level::from([(
-                    format!("c"),
-                    LSD::Value(format!("30")),
+                    "c".to_string(),
+                    LSD::Value("30".to_string()),
                 )]))
             ),
             (
-                format!("d"),
+                "d".to_string(),
                 LSD::Level(Level::from([
                     (
-                        format!("d"),
-                        LSD::Value(format!("40")),
+                        "d".to_string(),
+                        LSD::Value("40".to_string()),
                     ),
                     (
-                        format!("2"),
-                        LSD::Value(format!("50")),
+                        "2".to_string(),
+                        LSD::Value("50".to_string()),
                     )
                 ]))
             ),
@@ -159,6 +157,7 @@ fn nested_list() {
             c[ 1 2 {} 3 4 ]
             d[ 1 2
                3 4 ]
+            e[ 1.2 ]
         "#,
     );
 
@@ -168,29 +167,35 @@ fn nested_list() {
         lsd,
         LSD::Level(Level::from([
             (
-                format!("a"),
+                "a".to_string(),
                 LSD::List(List::from([LSD::Value(
-                    format!("a 10")
+                    "a 10".to_string()
                 )]))
             ),
             (
-                format!("b"),
+                "b".to_string(),
                 LSD::List(List::default())
             ),
             (
-                format!("c"),
+                "c".to_string(),
                 LSD::List(List::from([
-                    LSD::Value(format!("1 2")),
+                    LSD::Value("1 2".to_string()),
                     LSD::Level(Level::default()),
-                    LSD::Value(format!("3 4"))
+                    LSD::Value("3 4".to_string())
                 ]))
             ),
             (
-                format!("d"),
+                "d".to_string(),
                 LSD::List(List::from([
-                    LSD::Value(format!("1 2")),
-                    LSD::Value(format!("3 4"))
+                    LSD::Value("1 2".to_string()),
+                    LSD::Value("3 4".to_string())
                 ]))
+            ),
+            (
+                "e".to_string(),
+                LSD::List(List::from([LSD::Value(
+                    "1.2".to_string()
+                )]))
             ),
         ]))
     );

@@ -178,7 +178,9 @@ List (vector) is an ordered collection of non-necessarily-unique LSDs. Lists use
 List ::= '[' NWS (ListLSD NWS)* ']'
 
 ListLSD ::= ListValue | List | Level
-ListValue ::= KeyPart (IWS KeyPart)*
+ListPart ::= (ListWord | String)+
+ListWord ::= (ValueWordChar - '{' - '}' - '[' - ']')+
+ListValue ::= ListPart (IWS ListPart)*
 ```
 
 ### Example

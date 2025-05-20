@@ -72,11 +72,11 @@ impl Default for LSD {
 }
 
 impl PartialEq<&LSD> for LSD {
-    fn eq(&self, other: &&LSD) -> bool { &self == other }
+    fn eq(&self, other: &&LSD) -> bool { self == *other }
 }
 
 impl PartialEq<LSD> for &LSD {
-    fn eq(&self, other: &LSD) -> bool { self == &other }
+    fn eq(&self, other: &LSD) -> bool { *self == other }
 }
 
 //
@@ -89,7 +89,7 @@ pub enum ParseError {
     /// [io::Error]s thrown during reading.
     ReadFailure(io::Error),
 
-    /// Any kind of characters have occured after a list of a level as the file root.
+    /// Any kind of characters have occurred after a list of a level as the file root.
     UnexpectedCharAtFileEnd,
 
     /// File ended after a string start (`"` or `'`).
@@ -162,7 +162,7 @@ impl LSD {
         if let Some(level) = read_level(stream)? {
             read_nws(stream)?;
 
-            if let Some(_) = peek(stream)? {
+            if peek(stream)?.is_some() {
                 return Err(UnexpectedCharAtFileEnd);
             }
 
@@ -172,7 +172,7 @@ impl LSD {
         if let Some(list) = read_list(stream)? {
             read_nws(stream)?;
 
-            if let Some(_) = peek(stream)? {
+            if peek(stream)?.is_some() {
                 return Err(UnexpectedCharAtFileEnd);
             }
 
@@ -185,7 +185,6 @@ impl LSD {
     }
 }
 
-/// Peek a character from the stream.
 fn peek(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<
@@ -211,7 +210,6 @@ fn peek(
     })
 }
 
-/// Read a character from the stream.
 fn read(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<char>, ParseError> {
@@ -220,7 +218,6 @@ fn read(
         .transpose()?)
 }
 
-/// Read a sequence of whitespaces (' ' and '\t') from the stream.
 fn read_iws(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<String, ParseError> {
@@ -231,7 +228,6 @@ fn read_iws(
     Ok(result)
 }
 
-/// Read a sequence of whitespaces with newlines ('\r' and '\n') from the stream.
 fn read_nws(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<bool, ParseError> {
@@ -262,7 +258,6 @@ fn read_nws(
     }
 }
 
-/// Read an LSD from the stream.
 fn read_lsd(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
     value_ignore_char: Option<char>,
@@ -282,7 +277,6 @@ fn read_lsd(
     Ok(None)
 }
 
-/// Read a value from the stream.
 fn read_value(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
     ignore_char: Option<char>,
@@ -304,7 +298,6 @@ fn read_value(
     }))
 }
 
-/// Read a value part (word or string) from the stream.
 fn read_value_part(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
     ignore_char: Option<char>,
@@ -320,7 +313,6 @@ fn read_value_part(
     Ok(None)
 }
 
-/// Read a word (non-whitespace, non-comment, non-string) from the stream.
 fn read_word(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
     ignore_char: Option<char>,
@@ -339,7 +331,6 @@ fn read_word(
         .then_some(result))
 }
 
-/// Read a string (starting and ending with `'` or `"`) from the stream.
 fn read_string(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<String>, ParseError> {
@@ -352,9 +343,9 @@ fn read_string(
 
     fn u4_from_hex_char(ch: char) -> Result<u8, ()> {
         match ch {
-            'a'..='f' => Ok(ch as u8 - 'a' as u8 + 10),
-            'A'..='F' => Ok(ch as u8 - 'A' as u8 + 10),
-            '0'..='9' => Ok(ch as u8 - '0' as u8),
+            'a'..='f' => Ok(ch as u8 - b'a' + 10),
+            'A'..='F' => Ok(ch as u8 - b'A' + 10),
+            '0'..='9' => Ok(ch as u8 - b'0'),
             _ => Err(()),
         }
     }
@@ -465,7 +456,6 @@ fn read_string(
     }
 }
 
-/// Read a level (`{}`) from the stream.
 fn read_level(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<Level>, ParseError> {
@@ -481,7 +471,6 @@ fn read_level(
     )?))
 }
 
-/// Read a sequence of key-LSD pairs from the stream.
 fn read_level_inner(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
     level_ends_with_close: bool,
@@ -516,12 +505,12 @@ fn read_level_inner(
                         .insert(key.clone(), LSD::Value(value))
                         .is_none()
                         .then_some(())
-                        .ok_or_else(|| KeyCollisionKeyAlreadyExists(key))?,
+                        .ok_or(KeyCollisionKeyAlreadyExists(key))?,
                     LSD::List(list) => insert_into
                         .insert(key.clone(), LSD::List(list))
                         .is_none()
                         .then_some(())
-                        .ok_or_else(|| KeyCollisionKeyAlreadyExists(key))?,
+                        .ok_or(KeyCollisionKeyAlreadyExists(key))?,
                     LSD::Level(lvl) => match insert_into
                         .entry(key)
                         .or_insert_with(|| LSD::Level(Level::default()))
@@ -532,7 +521,7 @@ fn read_level_inner(
                     },
                 }
             }
-            return Ok(());
+            Ok(())
         }
 
         // wrap key-lsd pair in key parts
@@ -565,7 +554,6 @@ fn read_level_inner(
     })
 }
 
-/// Read a key word (word, but also not level or list) from the stream.
 fn read_key_word(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<String>, ParseError> {
@@ -586,7 +574,6 @@ fn read_key_word(
     })
 }
 
-/// Read a key part from the stream.
 fn read_key_part(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<String>, ParseError> {
@@ -609,7 +596,6 @@ fn read_key_part(
     }
 }
 
-/// Read a key path (separated by `.`) from the stream.
 fn read_key_path(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<Vec<String>>, ParseError> {
@@ -632,7 +618,6 @@ fn read_key_path(
     Ok(Some(result))
 }
 
-/// Read a list item from the stream.
 fn read_list_lsd(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<LSD>, ParseError> {
@@ -651,19 +636,60 @@ fn read_list_lsd(
     Ok(None)
 }
 
-/// Read a list value (same as regular value, but may not contain level or list) from the stream.
+fn read_list_word(
+    stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
+) -> Result<Option<String>, ParseError> {
+    let mut result = String::new();
+    Ok(loop {
+        match peek(stream)? {
+            None
+            | Some((
+                ' ' | '\t' | '\r' | '\n' | '\'' | '"' | '#' | '{' | '}' | '[' | ']',
+                _,
+            )) =>
+                break result
+                    .is_empty()
+                    .not()
+                    .then_some(result),
+            Some((_, accept)) => result.push(accept()),
+        }
+    })
+}
+
+fn read_list_part(
+    stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
+) -> Result<Option<String>, ParseError> {
+    let mut result = String::new();
+    loop {
+        if let Some(word) = read_list_word(stream)? {
+            result.push_str(&word);
+            continue;
+        }
+
+        if let Some(string) = read_string(stream)? {
+            result.push_str(&string);
+            continue;
+        }
+
+        break Ok(result
+            .is_empty()
+            .not()
+            .then_some(result));
+    }
+}
+
 fn read_list_value(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<Value>, ParseError> {
-    let Some(mut result) = read_key_part(stream)? else {
+    let Some(mut result) = read_list_part(stream)? else {
         return Ok(None);
     };
 
     Ok(Some(loop {
         let iws = read_iws(stream)?;
-        match read_key_part(stream)? {
+        match read_list_part(stream)? {
             Some(part) => {
-                // Rust, why no push_string?
+                // Rust, why not impl Borrow<str>?
                 result.push_str(&iws);
                 result.push_str(&part);
             },
@@ -672,7 +698,6 @@ fn read_list_value(
     }))
 }
 
-/// Read a list (`[]`) from the stream.
 fn read_list(
     stream: &mut Peekable<impl Iterator<Item = io::Result<char>>>,
 ) -> Result<Option<List>, ParseError> {
@@ -687,12 +712,9 @@ fn read_list(
 
     let mut results = List::default();
     Ok(Some(loop {
-        match peek(stream)? {
-            Some((']', accept)) => {
-                accept();
-                break results;
-            },
-            _ => {},
+        if let Some((']', accept)) = peek(stream)? {
+            accept();
+            break results;
         }
 
         results.push(read_list_lsd(stream)?.ok_or(ExpectedListLSDOrEnd)?);

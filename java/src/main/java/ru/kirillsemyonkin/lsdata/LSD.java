@@ -22,31 +22,34 @@ import java.util.function.Supplier;
 import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-/// LSD (Less Syntax Data) configuration/data transfer format.
-///
-/// It is made out three variants - values (strings/words), lists (`[]`) and
-/// levels (`{}`). File may not contain only a value (it will be considered a
-/// level).
-///
-/// ```java
-/// try (var stream = new FileInputStream("example.lsd")) {
-///     var fileLSD = LSD.parse(stream);
-///     var langKey = "java";
-///     var langName = lsd
-///         .value(
-///             LanguageNameIsNotAValueException::new,
-///             "languages", langKey, "name"
-///          )
-///         .orElseThrow(CouldNotFindLanguageNameException::new);
-///     System.out.println(langName);
-/// }
-/// ```
-///
-/// Visit [LSD repository](https://github.com/kirillsemyonkin/lsd) for a full LSD description.
-///
-/// @see Value
-/// @see List
-/// @see Level
+/**
+ * LSD (Less Syntax Data) configuration/data transfer format.
+ *
+ * <p>
+ * It is made out three variants - values (strings/words), lists (`[]`) and
+ * levels (`{}`). File may not contain only a value (it will be considered a
+ * level).
+ *
+ * <pre>{@code
+ * try (var stream = new FileInputStream("example.lsd")){
+ *     var fileLSD = LSD.parse(stream);
+ *     var langKey = "java";
+ *     var langName = lsd
+ *         .value(
+ *             LanguageNameIsNotAValueException::new,
+ *             "languages", langKey, "name"
+ *         )
+ *         .orElseThrow(CouldNotFindLanguageNameException::new);
+ *     System.out.println(langName);
+ * }
+ * }</pre>
+ *
+ * Visit [LSD repository](https://github.com/kirillsemyonkin/lsd) for a full LSD description.
+ *
+ * @see Value
+ * @see List
+ * @see Level
+ */
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") // netbeans/vscode Oracle.oracle-java bug
 public sealed interface LSD permits Value, List, Level {
     /**
@@ -214,7 +217,7 @@ public sealed interface LSD permits Value, List, Level {
         }
 
         /**
-         * Any kind of characters have occured after a list or a level as the
+         * Any kind of characters have occurred after a list or a level as the
          * file root.
          */
         public static final class UnexpectedCharAtFileEnd extends ParseException {
@@ -331,7 +334,7 @@ public sealed interface LSD permits Value, List, Level {
         public static final class KeyCollisionKeyAlreadyExists extends ParseException {
             /**
              * javadoc bug asks me to document this
-             *
+             * 
              * @hidden
              */
             private final String key;
@@ -722,13 +725,6 @@ public sealed interface LSD permits Value, List, Level {
         }
     }
 
-    /**
-     * Peek a character from the stream.
-     *
-     * @param stream Stream to peek.
-     * @return Peeked character.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<PeekableChars.Peek> peek(PeekableChars stream) throws ParseException {
         try {
             return stream.peek();
@@ -737,13 +733,6 @@ public sealed interface LSD permits Value, List, Level {
         }
     }
 
-    /**
-     * Read a character from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read character.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<Character> read(PeekableChars stream) throws ParseException {
         try {
             return stream.read();
@@ -752,13 +741,6 @@ public sealed interface LSD permits Value, List, Level {
         }
     }
 
-    /**
-     * Read a sequence of whitespaces (' ' and '\t') from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read whitespaces for adjoining words and strings.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static String readIWS(PeekableChars stream) throws ParseException {
         var result = new StringBuilder();
         while (peek(stream) instanceof Some(var peek)
@@ -767,14 +749,6 @@ public sealed interface LSD permits Value, List, Level {
         return result.toString();
     }
 
-    /**
-     * Read a sequence of whitespaces with newlines ('\r' and '\n') from the
-     * stream.
-     *
-     * @param stream Stream to read.
-     * @return True if met any newlines.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static boolean readNWS(PeekableChars stream) throws ParseException {
         readIWS(stream);
 
@@ -805,15 +779,6 @@ public sealed interface LSD permits Value, List, Level {
         }
     }
 
-    /**
-     * Read an LSD from the stream.
-     *
-     * @param stream          Stream to read.
-     * @param valueIgnoreChar Character to ignore in words (closing lists and
-     *                        levels).
-     * @return Read LSD.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<LSD> readLSD(
         PeekableChars stream,
         Option<Character> valueIgnoreChar
@@ -827,15 +792,6 @@ public sealed interface LSD permits Value, List, Level {
         return new None<>();
     }
 
-    /**
-     * Read a value from the stream.
-     *
-     * @param stream     Stream to read.
-     * @param ignoreChar Character to ignore in words (closing lists and
-     *                   levels).
-     * @return Read value.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<Value> readValue(
         PeekableChars stream,
         Option<Character> ignoreChar
@@ -858,15 +814,6 @@ public sealed interface LSD permits Value, List, Level {
         }
     }
 
-    /**
-     * Read a value part (word or string) from the stream.
-     *
-     * @param stream     Stream to read.
-     * @param ignoreChar Character to ignore in words (closing lists and
-     *                   levels).
-     * @return Read value part.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<String> readValuePart(
         PeekableChars stream,
         Option<Character> ignoreChar
@@ -878,14 +825,6 @@ public sealed interface LSD permits Value, List, Level {
         return new None<>();
     }
 
-    /**
-     * Read a word (non-whitespace, non-comment, non-string) from the stream.
-     *
-     * @param stream     Stream to read.
-     * @param ignoreChar Character to ignore (closing lists and levels).
-     * @return Read word.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<String> readWord(
         PeekableChars stream,
         Option<Character> ignoreChar
@@ -910,13 +849,6 @@ public sealed interface LSD permits Value, List, Level {
             : new Some<>(result.toString());
     }
 
-    /**
-     * Read a string (starting and ending with `'` or `"`) from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read string.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<String> readString(PeekableChars stream) throws ParseException {
         char closingChar;
         switch (peek(stream)) {
@@ -1069,13 +1001,6 @@ public sealed interface LSD permits Value, List, Level {
             }
     }
 
-    /**
-     * Read a level (`{}`) from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read level.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<Level> readLevel(PeekableChars stream) throws ParseException {
         switch (peek(stream)) {
             case Some(var peek) when peek.get() == '{' -> peek.accept();
@@ -1089,15 +1014,6 @@ public sealed interface LSD permits Value, List, Level {
         return new Some<>(readLevelInner(stream, true));
     }
 
-    /**
-     * Read a sequence of key-LSD pairs from the stream.
-     *
-     * @param stream             Stream to read.
-     * @param levelEndsWithClose Whether the level ends with a closing character
-     *                           (`}`).
-     * @return Read level.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Level readLevelInner(
         PeekableChars stream,
         boolean levelEndsWithClose
@@ -1171,13 +1087,6 @@ public sealed interface LSD permits Value, List, Level {
         }
     }
 
-    /**
-     * Read a key word (word, but also not level or list) from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read key word.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<String> readKeyWord(PeekableChars stream) throws ParseException {
         var result = new StringBuilder();
         loop:
@@ -1196,13 +1105,6 @@ public sealed interface LSD permits Value, List, Level {
             : new Some<>(result.toString());
     }
 
-    /**
-     * Read a key part from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read key part.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<String> readKeyPart(PeekableChars stream) throws ParseException {
         var result = new StringBuilder();
         while (true) {
@@ -1222,13 +1124,6 @@ public sealed interface LSD permits Value, List, Level {
         }
     }
 
-    /**
-     * Read a key path (separated by `.`) from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read key path.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<ArrayList<String>> readKeyPath(PeekableChars stream) throws ParseException {
         var result = new ArrayList<String>();
 
@@ -1247,13 +1142,6 @@ public sealed interface LSD permits Value, List, Level {
         return new Some<>(result);
     }
 
-    /**
-     * Read a list item from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read list item.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<LSD> readListLSD(PeekableChars stream) throws ParseException {
         if (readList(stream) instanceof Some(var list))
             return new Some<>(list);
@@ -1264,22 +1152,47 @@ public sealed interface LSD permits Value, List, Level {
         return new None<>();
     }
 
-    /**
-     * Read a list value (same as regular value, but may not contain level or
-     * list) from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read list value.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
+    private static Option<String> readListWord(PeekableChars stream) throws ParseException {
+        var result = new StringBuilder();
+        loop:
+        while (true)
+            switch (peek(stream)) {
+                case None() -> {
+                    break loop;
+                }
+                case Some(var peek) when " \t\r\n'\"#{}[]".indexOf(peek.get()) >= 0 -> {
+                    break loop;
+                }
+                case Some(var peek) -> result.append(peek.accept());
+            }
+        return Option.of(!result.isEmpty(), result::toString);
+    }
+
+    private static Option<String> readListPart(PeekableChars stream) throws ParseException {
+        var result = new StringBuilder();
+        while (true) {
+            if (readListWord(stream) instanceof Some(var word)) {
+                result.append(word);
+                continue;
+            }
+
+            if (readString(stream) instanceof Some(var string)) {
+                result.append(string);
+                continue;
+            }
+
+            return Option.of(!result.isEmpty(), result::toString);
+        }
+    }
+
     private static Option<Value> readListValue(PeekableChars stream) throws ParseException {
-        if (!(readKeyPart(stream) instanceof Some(var firstPart)))
+        if (!(readListPart(stream) instanceof Some(var firstPart)))
             return new None<>();
         var result = new StringBuilder(firstPart);
 
         while (true) {
             var iws = readIWS(stream);
-            switch (readKeyPart(stream)) {
+            switch (readListPart(stream)) {
                 case Some(var part) -> {
                     result.append(iws);
                     result.append(part);
@@ -1291,13 +1204,6 @@ public sealed interface LSD permits Value, List, Level {
         }
     }
 
-    /**
-     * Read a list (`[]`) from the stream.
-     *
-     * @param stream Stream to read.
-     * @return Read list.
-     * @throws ru.kirillsemyonkin.lsdata.LSD.ParseException If unable to read.
-     */
     private static Option<List> readList(PeekableChars stream) throws ParseException {
         switch (peek(stream)) {
             case Some(var peek) when peek.get() == '[' -> peek.accept();
@@ -1497,6 +1403,12 @@ public sealed interface LSD permits Value, List, Level {
             try {
                 return new Some<>((T) value);
             } catch (NumberFormatException e) {
+                throw invalid.get();
+            }
+        if (type == UUID.class)
+            try {
+                return new Some<>((T) UUID.fromString(value));
+            } catch (IllegalArgumentException e) {
                 throw invalid.get();
             }
         try {

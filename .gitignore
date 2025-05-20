@@ -1,4 +1,5 @@
 .vscode
+.idea
 
 rust/target
 rust/Cargo.lock

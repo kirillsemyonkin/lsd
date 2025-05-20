@@ -30,7 +30,7 @@ fn level() {
             .unwrap()
             .get("b")
             .unwrap(),
-        LSD::Value(format!("10"))
+        LSD::Value("10".to_string())
     );
     assert_eq!(
         lsd.value(|| (), key!["a" "b"])
@@ -50,7 +50,7 @@ fn list() {
         lsd.list(|| (), key!["a"])
             .unwrap()
             .unwrap()[0],
-        LSD::Value(format!("10"))
+        LSD::Value("10".to_string())
     );
     assert_eq!(
         lsd.value(|| (), key!["a" 0])
