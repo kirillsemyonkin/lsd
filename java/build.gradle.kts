@@ -5,7 +5,7 @@ plugins {
 
 description = "LSD (Less Syntax Data) configuration/data transfer format"
 group = "ru.kirillsemyonkin"
-version = "0.2.1"
+version = "0.2.2"
 
 java.toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 

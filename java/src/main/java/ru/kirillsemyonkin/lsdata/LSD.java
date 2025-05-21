@@ -44,7 +44,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  *     System.out.println(langName);
  * }
  * }</pre>
- *
+ * <p>
  * Visit [LSD repository](https://github.com/kirillsemyonkin/lsd) for a full LSD description.
  *
  * @see Value
@@ -335,7 +335,7 @@ public sealed interface LSD permits Value, List, Level {
         public static final class KeyCollisionKeyAlreadyExists extends ParseException {
             /**
              * javadoc bug asks me to document this
-             * 
+             *
              * @hidden
              */
             private final String key;
@@ -389,11 +389,6 @@ public sealed interface LSD permits Value, List, Level {
             }
 
             @Override
-            public <E extends Throwable> T orElseThrow(Supplier<E> error) {
-                return get;
-            }
-
-            @Override
             public <T2> Some<T2> map(Function<T, T2> map) {
                 return new Some<>(map.apply(get));
             }
@@ -420,6 +415,21 @@ public sealed interface LSD permits Value, List, Level {
                     ? this
                     : new None<>();
             }
+
+            @Override
+            public T orElse(T value) {
+                return get;
+            }
+
+            @Override
+            public T orElseGet(Supplier<T> supplier) {
+                return get;
+            }
+
+            @Override
+            public <E extends Throwable> T orElseThrow(Supplier<E> error) {
+                return get;
+            }
         }
 
         /**
@@ -428,6 +438,16 @@ public sealed interface LSD permits Value, List, Level {
          * @param <T> Supposedly stored value type, but None does not have it.
          */
         record None<T>() implements Option<T> {
+            @Override
+            public T get() throws NoSuchElementException {
+                throw new NoSuchElementException();
+            }
+
+            @Override
+            public Optional<T> java() {
+                return Optional.empty();
+            }
+
             @Override
             public <T2> None<T2> map(Function<T, T2> map) {
                 return new None<>();
@@ -451,6 +471,21 @@ public sealed interface LSD permits Value, List, Level {
             @Override
             public None<T> filter(Predicate<T> filter) {
                 return this;
+            }
+
+            @Override
+            public T orElse(T value) {
+                return value;
+            }
+
+            @Override
+            public T orElseGet(Supplier<T> supplier) {
+                return supplier.get();
+            }
+
+            @Override
+            public <E extends Throwable> T orElseThrow(Supplier<E> error) throws E {
+                throw error.get();
             }
         }
 
@@ -490,18 +525,14 @@ public sealed interface LSD permits Value, List, Level {
          * @return Stored value if present.
          * @throws NoSuchElementException If the value is not present.
          */
-        default T get() throws NoSuchElementException {
-            throw new NoSuchElementException();
-        }
+        T get() throws NoSuchElementException;
 
         /**
          * Convert to a {@link java.util.Optional} mirror.
          *
          * @return {@link java.util.Optional}.
          */
-        default Optional<T> java() {
-            return Optional.empty();
-        }
+        Optional<T> java();
 
         /**
          * Convert the underlying value to another type using a mapping
@@ -577,9 +608,7 @@ public sealed interface LSD permits Value, List, Level {
          * @param value Default value.
          * @return Stored value if present, otherwise default value.
          */
-        default T orElse(T value) {
-            return value;
-        }
+        T orElse(T value);
 
         /**
          * Get the value if present, otherwise return a default value.
@@ -587,9 +616,7 @@ public sealed interface LSD permits Value, List, Level {
          * @param value Supplier of the default value.
          * @return Stored value if present, otherwise default value.
          */
-        default T orElseGet(Supplier<T> value) {
-            return value.get();
-        }
+        T orElseGet(Supplier<T> value);
 
         /**
          * Try to get the value, throwing an exception if it is not present.
@@ -599,9 +626,7 @@ public sealed interface LSD permits Value, List, Level {
          * @return Stored value if present.
          * @throws E If the value is not present.
          */
-        default <E extends Throwable> T orElseThrow(Supplier<E> error) throws E {
-            throw error.get();
-        }
+        <E extends Throwable> T orElseThrow(Supplier<E> error) throws E;
     }
 
     /**
