@@ -15,6 +15,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -360,8 +361,8 @@ public sealed interface LSD permits Value, List, Level {
     }
 
     /**
-     * Utility class that represents an optional value. Used instead of
-     * {@link java.util.Optional} for the pattern matching niceties.
+     * Utility class that represents an optional value. Used instead of {@link java.util.Optional}
+     * for the pattern matching niceties.
      *
      * @param <T> Stored value type.
      */
@@ -398,6 +399,12 @@ public sealed interface LSD permits Value, List, Level {
             }
 
             @Override
+            public Some<T> peek(Consumer<T> peeker) {
+                peeker.accept(get);
+                return this;
+            }
+
+            @Override
             public <T2, E extends Throwable> Some<T2> mapThrowing(MapThrowing<T, T2, E> map) throws E {
                 return new Some<>(map.apply(get));
             }
@@ -424,6 +431,11 @@ public sealed interface LSD permits Value, List, Level {
             @Override
             public <T2> None<T2> map(Function<T, T2> map) {
                 return new None<>();
+            }
+
+            @Override
+            public None<T> peek(Consumer<T> peeker) {
+                return this;
             }
 
             @Override
@@ -467,7 +479,7 @@ public sealed interface LSD permits Value, List, Level {
          * if the nullable value is null or the check is false.
          */
         static <T> Option<T> of(boolean check, Supplier<T> nullable) {
-            return check && nullable != null
+            return check
                 ? new Some<>(nullable.get())
                 : new None<>();
         }
@@ -492,18 +504,6 @@ public sealed interface LSD permits Value, List, Level {
         }
 
         /**
-         * Try to get the value, throwing an exception if it is not present.
-         *
-         * @param <E>   Exception type.
-         * @param error Supplier of the exception.
-         * @return Stored value if present.
-         * @throws E If the value is not present.
-         */
-        default <E extends Throwable> T orElseThrow(Supplier<E> error) throws E {
-            throw error.get();
-        }
-
-        /**
          * Convert the underlying value to another type using a mapping
          * function.
          *
@@ -512,6 +512,14 @@ public sealed interface LSD permits Value, List, Level {
          * @return Option with new value.
          */
         <T2> Option<T2> map(Function<T, T2> map);
+
+        /**
+         * Perform an action if the value is present.
+         *
+         * @param peeker Action to perform.
+         * @return This option.
+         */
+        Option<T> peek(Consumer<T> peeker);
 
         /**
          * Helper for {@link #mapThrowing(MapThrowing)} that lets you throw
@@ -562,6 +570,38 @@ public sealed interface LSD permits Value, List, Level {
          * @return Option filtered by the predicate.
          */
         Option<T> filter(Predicate<T> predicate);
+
+        /**
+         * Get the value if present, otherwise return a default value.
+         *
+         * @param value Default value.
+         * @return Stored value if present, otherwise default value.
+         */
+        default T orElse(T value) {
+            return value;
+        }
+
+        /**
+         * Get the value if present, otherwise return a default value.
+         *
+         * @param value Supplier of the default value.
+         * @return Stored value if present, otherwise default value.
+         */
+        default T orElseGet(Supplier<T> value) {
+            return value.get();
+        }
+
+        /**
+         * Try to get the value, throwing an exception if it is not present.
+         *
+         * @param <E>   Exception type.
+         * @param error Supplier of the exception.
+         * @return Stored value if present.
+         * @throws E If the value is not present.
+         */
+        default <E extends Throwable> T orElseThrow(Supplier<E> error) throws E {
+            throw error.get();
+        }
     }
 
     /**
