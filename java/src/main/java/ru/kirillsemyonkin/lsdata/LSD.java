@@ -19,6 +19,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -361,14 +362,14 @@ public sealed interface LSD permits Value, List, Level {
     }
 
     /**
-     * Utility class that represents an optional value. Used instead of {@link java.util.Optional}
+     * Utility class that represents an optional value. Used instead of {@link Optional}
      * for the pattern matching niceties.
      *
      * @param <T> Stored value type.
      */
     sealed interface Option<T> permits Some, None {
         /**
-         * Present value. Similar to {@link java.util.Optional#isPresent()}.
+         * Present value. Similar to {@link Optional#isPresent()}.
          *
          * @param <T> Stored value type.
          * @param get Stored value.
@@ -389,28 +390,35 @@ public sealed interface LSD permits Value, List, Level {
             }
 
             @Override
-            public <T2> Some<T2> map(Function<T, T2> map) {
+            public Stream<T> stream() {
+                return Stream.of(get);
+            }
+
+            @Override
+            public <T2> Some<T2> map(Function<? super T, ? extends T2> map) {
                 return new Some<>(map.apply(get));
             }
 
             @Override
-            public Some<T> peek(Consumer<T> peeker) {
+            public Some<T> peek(Consumer<? super T> peeker) {
                 peeker.accept(get);
                 return this;
             }
 
             @Override
-            public <T2, E extends Throwable> Some<T2> mapThrowing(MapThrowing<T, T2, E> map) throws E {
+            public <T2, E extends Throwable> Some<T2> mapThrowing(
+                MapThrowing<? super T, ? extends T2, E> map
+            ) throws E {
                 return new Some<>(map.apply(get));
             }
 
             @Override
-            public <T2> Option<T2> flatMap(Function<T, Option<T2>> map) {
+            public <T2> Option<T2> flatMap(Function<? super T, Option<T2>> map) {
                 return map.apply(get);
             }
 
             @Override
-            public Option<T> filter(Predicate<T> filter) {
+            public Option<T> filter(Predicate<? super T> filter) {
                 return filter.test(get)
                     ? this
                     : new None<>();
@@ -422,18 +430,18 @@ public sealed interface LSD permits Value, List, Level {
             }
 
             @Override
-            public T orElseGet(Supplier<T> supplier) {
+            public T orElseGet(Supplier<? extends T> supplier) {
                 return get;
             }
 
             @Override
-            public <E extends Throwable> T orElseThrow(Supplier<E> error) {
+            public <E extends Throwable> T orElseThrow(Supplier<? extends E> error) {
                 return get;
             }
         }
 
         /**
-         * Empty value. Similar to {@link java.util.Optional#isEmpty()}.
+         * Empty value. Similar to {@link Optional#isEmpty()}.
          *
          * @param <T> Supposedly stored value type, but None does not have it.
          */
@@ -449,27 +457,34 @@ public sealed interface LSD permits Value, List, Level {
             }
 
             @Override
-            public <T2> None<T2> map(Function<T, T2> map) {
+            public Stream<T> stream() {
+                return Stream.empty();
+            }
+
+            @Override
+            public <T2> None<T2> map(Function<? super T, ? extends T2> map) {
                 return new None<>();
             }
 
             @Override
-            public None<T> peek(Consumer<T> peeker) {
+            public None<T> peek(Consumer<? super T> peeker) {
                 return this;
             }
 
             @Override
-            public <T2, E extends Throwable> None<T2> mapThrowing(MapThrowing<T, T2, E> map) {
+            public <T2, E extends Throwable> None<T2> mapThrowing(
+                MapThrowing<? super T, ? extends T2, E> map
+            ) {
                 return new None<>();
             }
 
             @Override
-            public <T2> None<T2> flatMap(Function<T, Option<T2>> map) {
+            public <T2> None<T2> flatMap(Function<? super T, Option<T2>> map) {
                 return new None<>();
             }
 
             @Override
-            public None<T> filter(Predicate<T> filter) {
+            public None<T> filter(Predicate<? super T> filter) {
                 return this;
             }
 
@@ -479,14 +494,53 @@ public sealed interface LSD permits Value, List, Level {
             }
 
             @Override
-            public T orElseGet(Supplier<T> supplier) {
+            public T orElseGet(Supplier<? extends T> supplier) {
                 return supplier.get();
             }
 
             @Override
-            public <E extends Throwable> T orElseThrow(Supplier<E> error) throws E {
+            public <E extends Throwable> T orElseThrow(Supplier<? extends E> error) throws E {
                 throw error.get();
             }
+        }
+
+        /**
+         * Creates a new {@link Some} wrapping the given value.
+         *
+         * @param <T> Supposedly stored value type.
+         * @param value Stored value. Must not be {@code null}.
+         * @return A new {@link Some}.
+         */
+        static <T> Some<T> some(T value) {
+            return new Some<>(value);
+        }
+
+        /**
+         * Creates an empty {@link None}.
+         *
+         * @param <T> Supposedly stored value type, but None does not have it.
+         * @return An empty {@link None}.
+         */
+        static <T> None<T> none() {
+            return new None<>();
+        }
+
+        /**
+         * Checks if the value is {@link Some}.
+         *
+         * @return True if the value is {@link Some}.
+         */
+        default boolean isSome() {
+            return this instanceof Some;
+        }
+
+        /**
+         * Checks if the value is {@link None}.
+         *
+         * @return True if the value is {@link None}.
+         */
+        default boolean isNone() {
+            return this instanceof None;
         }
 
         /**
@@ -513,7 +567,7 @@ public sealed interface LSD permits Value, List, Level {
          * @return A {@link Some} wrapping the nullable value, or a {@link None}
          * if the nullable value is null or the check is false.
          */
-        static <T> Option<T> of(boolean check, Supplier<T> nullable) {
+        static <T> Option<T> of(boolean check, Supplier<? extends T> nullable) {
             return check
                 ? new Some<>(nullable.get())
                 : new None<>();
@@ -528,11 +582,18 @@ public sealed interface LSD permits Value, List, Level {
         T get() throws NoSuchElementException;
 
         /**
-         * Convert to a {@link java.util.Optional} mirror.
+         * Convert to a {@link Optional} mirror.
          *
-         * @return {@link java.util.Optional}.
+         * @return {@link Optional}.
          */
         Optional<T> java();
+
+        /**
+         * Iterate through the optional value.
+         *
+         * @return A {@link Stream} that contains the wrapped optional value.
+         */
+        Stream<T> stream();
 
         /**
          * Convert the underlying value to another type using a mapping
@@ -542,7 +603,7 @@ public sealed interface LSD permits Value, List, Level {
          * @param map  Mapping function.
          * @return Option with new value.
          */
-        <T2> Option<T2> map(Function<T, T2> map);
+        <T2> Option<T2> map(Function<? super T, ? extends T2> map);
 
         /**
          * Perform an action if the value is present.
@@ -550,7 +611,7 @@ public sealed interface LSD permits Value, List, Level {
          * @param peeker Action to perform.
          * @return This option.
          */
-        Option<T> peek(Consumer<T> peeker);
+        Option<T> peek(Consumer<? super T> peeker);
 
         /**
          * Helper for {@link #mapThrowing(MapThrowing)} that lets you throw
@@ -582,7 +643,9 @@ public sealed interface LSD permits Value, List, Level {
          * @return Option with new value.
          * @throws E If the mapping function throws.
          */
-        <T2, E extends Throwable> Option<T2> mapThrowing(MapThrowing<T, T2, E> map) throws E;
+        <T2, E extends Throwable> Option<T2> mapThrowing(
+            MapThrowing<? super T, ? extends T2, E> map
+        ) throws E;
 
         /**
          * Convert the underlying value to an Option using a mapping function
@@ -592,7 +655,7 @@ public sealed interface LSD permits Value, List, Level {
          * @param map  Mapping function.
          * @return Option given by the mapping function.
          */
-        <T2> Option<T2> flatMap(Function<T, Option<T2>> map);
+        <T2> Option<T2> flatMap(Function<? super T, Option<T2>> map);
 
         /**
          * Filter the Option using a predicate.
@@ -600,7 +663,7 @@ public sealed interface LSD permits Value, List, Level {
          * @param predicate Filter predicate.
          * @return Option filtered by the predicate.
          */
-        Option<T> filter(Predicate<T> predicate);
+        Option<T> filter(Predicate<? super T> predicate);
 
         /**
          * Get the value if present, otherwise return a default value.
@@ -616,7 +679,7 @@ public sealed interface LSD permits Value, List, Level {
          * @param value Supplier of the default value.
          * @return Stored value if present, otherwise default value.
          */
-        T orElseGet(Supplier<T> value);
+        T orElseGet(Supplier<? extends T> value);
 
         /**
          * Try to get the value, throwing an exception if it is not present.
@@ -626,7 +689,7 @@ public sealed interface LSD permits Value, List, Level {
          * @return Stored value if present.
          * @throws E If the value is not present.
          */
-        <E extends Throwable> T orElseThrow(Supplier<E> error) throws E;
+        <E extends Throwable> T orElseThrow(Supplier<? extends E> error) throws E;
     }
 
     /**
@@ -1392,7 +1455,7 @@ public sealed interface LSD permits Value, List, Level {
      * @throws E If found value is not a {@link Value}.
      */
     default <E extends Throwable> Option<Value> value(
-        Supplier<E> invalid,
+        Supplier<? extends E> invalid,
         Object... parts
     ) throws E {
         return inner(parts)
@@ -1417,7 +1480,7 @@ public sealed interface LSD permits Value, List, Level {
     @SuppressWarnings("unchecked")
     default <T, E extends Throwable> Option<T> parsed(
         Class<T> type,
-        Supplier<E> invalid,
+        Supplier<? extends E> invalid,
         Object... parts
     ) throws E {
         if (!(value(invalid, parts) instanceof Some(Value(var value))))
@@ -1505,7 +1568,7 @@ public sealed interface LSD permits Value, List, Level {
      * @throws E If found value is not a {@link List}.
      */
     default <E extends Throwable> Option<List> list(
-        Supplier<E> invalid,
+        Supplier<? extends E> invalid,
         Object... parts
     ) throws E {
         return inner(parts)
@@ -1522,7 +1585,7 @@ public sealed interface LSD permits Value, List, Level {
      * @throws E If found value is not a {@link Level}.
      */
     default <E extends Throwable> Option<Level> level(
-        Supplier<E> invalid,
+        Supplier<? extends E> invalid,
         Object... parts
     ) throws E {
         return inner(parts)
